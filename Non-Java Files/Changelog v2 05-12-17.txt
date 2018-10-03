@@ -1,0 +1,31 @@
+Chef:
+	Adjusted Chef class to no longer walk on big demo (only walks if world less than 4 rooms)
+	Added println() statements to make it clearer the chef is talking
+	Added comas between elements of the chef's inventory in the debug print-out.
+	More string changes to make the chef more legible
+	turned chef debug verbose mode to false
+	Adjusted chef strings to account for goal name
+	Chef now picks up food from ground if inventory is empty
+	Chef will now automatically act with each player only once
+
+Adventure:
+	Added a call to printWorld()
+
+Key:
+	Added a new constructor that accepts a location
+	Adjusted existing Key(String, int) constructor to compile (with a null location)
+
+Location:
+	Adjusted the out of bounds error message slightly
+
+World:
+	Renamed MacGuffin to Secret Recipe and changed location to room 4
+	for small adventures, support MacGuffin placement in room (0,0)
+
+SmallAdventure:
+	changed turn order - human now acts before computer players - prevents the AI from
+		immediately walking over and acting.
+
+TODO:
+	Change custodian to look for instanceof Mop and not "mop"
+	Ensure custodian can actually trade for items

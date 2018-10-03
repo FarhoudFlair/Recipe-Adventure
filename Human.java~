@@ -1,0 +1,244 @@
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+/** A human (user) players in the game */
+
+public class Human extends Player{
+  
+  private static boolean verbose = true; // set true for debugging
+  // set false for submitted code
+  
+  /** Creates a player in the game
+    * 
+    * @param w is the world that the player lives in
+    * @param name is the name of the player
+    * @param location is where in the world the player is
+    * @param health is the health of the player (which may or may not be relevant in your game)
+    * @param things is a list of Thing objects that the player initially possesses
+    * @param goal is the Thing that the human player is trying to retrieve in the game
+    */
+  
+  public Human(World w, String name, Location location, int health,
+               List<Thing>  things, Thing goal){
+    super(w, name, location, health, things, goal);
+  }
+  
+  
+  /** Plays a turn for this player
+    * 
+    * For computer players will have the AI for that player.
+    * For human player querie user for input and then react 
+    * appropriately for the input.
+    */
+  @Override
+  public void play(){
+    
+    if(verbose){System.err.println("the room has " + w.getRoom(getLocation()).getPlayers() + " players");}
+    if(verbose){System.err.println("the room has " + w.getRoom(getLocation()).getThings() + " things");}
+    Scanner in = new Scanner(System.in);
+    System.out.print("What would you like to do? [type h <enter> for help] ");
+    String action = in.nextLine();
+    if( action.trim().equals("h") ){
+      help();
+    }else if(action.trim().equals("l") ){
+      look();
+    }else if(action.trim().charAt(0) == 'g'){
+      try {
+        List<Location> adjLocations = this.w.getRoom(this.getLocation()).getAdjacentRooms();
+        switch( action.trim().charAt(action.trim().length()-1) ){
+          case 'e' :
+            if(verbose) {System.err.println("human was in " + this.getLocation());}
+            move(this.getLocation().east());  
+            if(verbose){System.err.println("human now in " + this.getLocation());}
+            break;
+            
+          case 'w' :
+            if(verbose) {System.err.println("human was in " + this.getLocation());}
+            move(this.getLocation().west());
+            if(verbose){System.err.println("human now in " + this.getLocation());}
+            break;  
+            
+          case 's' :
+            if(verbose) {System.err.println("human was in " + this.getLocation());}
+            move(this.getLocation().south());
+            if(verbose){System.err.println("human now in " + this.getLocation());}
+            break;  
+            
+          case 'n' :
+            if(verbose) {System.err.println("human was in " + this.getLocation());}
+            move(this.getLocation().north());
+            break;  
+            
+            /*
+             case 'n' : 
+             if(verbose){System.err.println("human was in " + this.getLocation());}
+             Location northLocation = this.getLocation().north();
+             for(Location adjLoc: adjLocations){
+             if(northLocation.equals(adjLoc)){
+             this.w.getRoom(this.getLocation()).removePlayer(this);
+             this.setLocation( this.getLocation().north() );
+             this.w.getRoom(this.getLocation()).addPlayer(this);
+             break;
+             }
+             else{
+             System.out.println("You can't go that way");
+             }
+             }
+             if(verbose){System.err.println("human now in " + this.getLocation());}
+             break;
+             
+             */
+        }
+        
+      }  catch (BadLocationException e) {      
+        System.err.println(e); 
+      } finally {
+        return;
+      }
+      
+    } else if(action.trim().charAt(0) == 'i'){
+      List<Player> roomPlayers = w.getRoom(this.getLocation()).getPlayers();
+      List<Thing> roomThings = w.getRoom(this.getLocation()).getThings();
+      char lastChar = action.trim().charAt(action.trim().length()-1);
+      
+      
+      switch(lastChar) {
+        case 'p' :
+          if (roomPlayers.isEmpty()) {
+          System.out.println("There's no one to interact with here.");
+        } else {
+          for (int i=0;i<roomPlayers.size();i++) {
+            if (!(roomPlayers.get(i).equals(this))) {
+              roomPlayers.get(i).interact(this);
+            }
+          }
+        }
+        break;
+        case 't' :
+          if (roomThings.isEmpty()) {
+          System.out.println("There are no items to interact with here.");
+        } else {
+          for (int i=0;i<roomThings.size();i++) {
+            roomThings.get(i).interact(this);
+          }
+        }
+        break;
+        default:
+          if(Character.isDigit(lastChar)){
+          int lastDigit = Character.digit(lastChar, 10);
+          List<Thing> myThings = this.getThings();
+          if(myThings.size() > 0 && lastDigit < myThings.size()){
+            myThings.get(lastDigit).interact(this);
+            this.removeThing(myThings.get(lastDigit));
+          } else {
+            System.out.println("You have nothing in that inventory slot");
+          }
+        } else {
+          System.out.println("Unrecognized command");
+        }
+        break;
+      }
+      
+    } else if (action.trim().equals("w")) {
+      list();
+      
+    } else if (action.trim().charAt(0) == 'd') {
+      List<Thing> myThings = this.getThings();
+      List<Thing> roomThings = w.getRoom(this.getLocation()).getThings();
+      char lastChar = action.trim().charAt(action.trim().length()-1);
+      if(Character.isDigit(lastChar)){
+        int lastDigit = Character.digit(lastChar, 10);
+        if(myThings.size() > 0 && lastDigit < myThings.size()){
+          Thing dropable = myThings.get(lastDigit);
+          dropable.setLocation(this.getLocation());
+          Room currRoom = dropable.getLocation().getWorld().getRoom(dropable.getLocation());
+          currRoom.addThing(dropable);
+          this.removeThing(dropable);
+        } else {
+          System.out.println("You have nothing in that inventory slot");
+        } 
+      } else {
+        System.out.println("Unrecognized command");
+      }
+      
+    } else if (action.trim().equals("p")){
+      Room currRoom = this.getLocation().getWorld().getRoom(this.getLocation());
+      List<Thing> toPickUp = new ArrayList<Thing>();
+      List<Thing> roomThings = currRoom.getThings();
+      for(Thing currThing : roomThings){
+        toPickUp.add(currThing);
+      }
+      for(Thing currThing : toPickUp){
+        roomThings.remove(currThing);
+        this.addThing(currThing);
+      }
+    }
+    
+  }
+  
+  
+  
+  public void look(){
+    String s = "You are currently in ";
+    s += w.getRoom(getLocation()).toString();
+    System.out.println(s);
+  
+  List<Player> roomPlayers = w.getRoom(getLocation()).getPlayers();
+  List<Thing> roomThings = w.getRoom(getLocation()).getThings();
+  
+  if((roomPlayers.size()<2) && roomThings.isEmpty()){
+   System.out.println("There is nothing in the room.");
+  }
+  else{
+   String itemsAndPpl = new String();
+   for(int i=0; i<roomPlayers.size(); i++){
+    Player currPlayer = roomPlayers.get(i);
+    if(currPlayer.getClass().getName()!="Human"){
+     itemsAndPpl += " " + currPlayer.getName() + ",";
+    }
+   }
+   for (Thing currThing : roomThings) {
+    itemsAndPpl += " " + currThing.getName() + ",";
+   }
+   itemsAndPpl = itemsAndPpl.substring(0,itemsAndPpl.length()-1); // cut off the last comma
+   System.out.println("You see" + itemsAndPpl);
+  }
+  }
+  
+  public void help(){
+    String s = "Your options are:\n ";
+    s += "'h' for help \n ";
+    s += "'l' to look around the room \n ";
+    s += "'g x' to go in direction x (x can be n,e,w,s) \n ";
+    s += "'w' to list what you have \n ";
+    s += "'i x' to interact with x in the room (x can be t for thing or p for player) \n";
+    s += "'i n' to interact with n in your inventory (n is the index of the inventory slot) \n";
+    s += "'d n' to drop n from your inventory (n is the index of the inventory slot) \n";
+    s += "'p' to pick up all items in room and add them to your inventory \n";
+
+    System.out.println(s);
+  }
+  
+  public void list(){
+  List<Thing> myThings = this.getThings();
+  if(myThings.isEmpty()){
+   System.out.println("There is nothing in your inventory.");
+  }
+  else{
+   String myThingsStr = new String();
+   for(Thing currThing : myThings){
+    myThingsStr += " " + currThing.getName() + ",";
+   }
+   myThingsStr = myThingsStr.substring(0,myThingsStr.length()-1); // cut off the last comma
+   System.out.println("You have" + myThingsStr);  
+  }
+ }
+  
+  @Override
+   public void interact(Player p){
+   // allows for some interaction with a player
+    
+ }
+  
+}

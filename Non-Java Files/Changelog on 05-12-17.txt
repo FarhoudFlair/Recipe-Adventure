@@ -1,0 +1,27 @@
+Changes to room, human, food, adventure, Player, Chef, World
+
+
+Room: added removeThing(Thing t)
+
+Human: added new play command 'i n' for inventory interaction
+       added new play command 'd' for dropping items from inventory
+       added new play command 'p' for picking up items from room
+       import java.util.ArrayList
+
+Food: changed food interact - now removed from room item list when used.
+
+Adventure: added win condition - pick up Goal and carry to Entrance.
+           changed world construction to read from file
+	   modified Chef instance cook to have inventory with Food
+	   import java.util.ArrayList
+
+Player: changed move() method to output a message if you try to move to an invalid room.
+
+Chef: modified interact(Player) method to give directions to world.goal
+      modified interact(Player) method to give player food from Chef's inventory
+      modified play() method to allow chef to move randomly
+      modified the interact(Player) method so he only gives directions to players
+      modified play() to allow chef to interact with non-human players
+
+World: now uses Casey's World.java to read from file
+       added printWorld() method to print the map for the player to see

@@ -1,0 +1,9 @@
+Entrance	Lobby		Kitchen
+
+nothing		ID		Pizza Slice
+no one		Waiter		Chef
+-------------------------------------------
+Office		Washroom	BreakRoom
+
+nothing		Uniform		Mop
+no one		Custodian	Guard

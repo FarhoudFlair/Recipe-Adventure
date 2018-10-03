@@ -1,0 +1,143 @@
+import java.util.List;
+
+public class Chef extends Player{
+  private static String name = "Head Chef";
+  private static int chefHealth = 100;
+  private static Thing goal = null;
+  private List<Player> hasSpokenTo;
+  private static boolean verbose = true; // for debugging
+  
+  public Chef(World w, String name, Location location, int health, 
+                 List<Thing> things, Thing goal){
+    super(w, name, location, health, things, goal);
+    hasSpokenTo = new java.util.ArrayList<Player>();
+  }
+  
+  public Chef(World w, Location location, List<Thing> things){
+    this(w, name, location, chefHealth, things, goal);
+  }
+  
+  private int[] getDirections(){
+    int colDifference = this.getWorld().getGoal().getLocation().getCol() - this.getLocation().getCol();
+    int rowDifference = this.getWorld().getGoal().getLocation().getRow() - this.getLocation().getRow();
+    int[] directions = new int[] {colDifference, rowDifference};
+    return directions;
+  }
+
+  @Override
+  public void play(){
+   Room currRoom = this.getWorld().getRoom(this.getLocation());
+   int[] worldSize = this.getWorld().getSize();
+   if(worldSize[0] * worldSize[1] < 4){
+     Door[] moves = currRoom.getDoors();
+     java.util.Random wander = new java.util.Random();
+     if(wander.nextInt(10) < 10){ //for adjusting the chances of chef wandering
+       int direction = wander.nextInt(4);
+       if(moves[direction] != null){
+         move(moves[direction].getConnection().getLocation());
+       }
+       currRoom = this.getWorld().getRoom(this.getLocation());
+     }
+   }
+   List<Player> roomPlayers = currRoom.getPlayers();
+   if(roomPlayers.size() > 1){
+     for(Player currPlayer : roomPlayers){
+       if(!currPlayer.equals(this) && !this.hasSpokenTo.contains(currPlayer)){
+         this.interact(currPlayer);
+         this.hasSpokenTo.add(currPlayer);
+       }
+     }
+   }
+   List<Food> toPickUp = new java.util.ArrayList<Food>();
+   if(currRoom.getThings().size() > 0 && this.getThings().size() == 0){
+     for(Thing item : currRoom.getThings()){
+       if(item instanceof Food){
+         toPickUp.add((Food)item);
+       }
+     }
+     if(toPickUp.size() > 0){
+       System.out.println(this.getName() + ": Who left this lying around? Looks edible to me!");
+     }
+     for(Food food : toPickUp){
+       currRoom.getThings().remove(food);
+       this.addThing(food);
+     }
+   }
+   if(verbose){
+     List<Thing> chefInventory = this.getThings();
+     String inventory = this.getName() + "'s inventory: ";
+     for(Thing item : chefInventory){
+       inventory += item.getName() + ", ";
+     }
+     inventory = inventory.trim();
+     if(inventory.charAt(inventory.length()-1) == ','){
+       inventory = inventory.substring(0,inventory.length()-1);
+     }
+     System.err.println(inventory);
+   }
+   
+  }
+  
+  @Override
+  public void interact(Player p){
+    String s;
+    
+    if(this.getThings().size() > 0){
+      s = this.getName() + ": ";
+      s += "Hey you, " + p.getName() + ", tell me what you think of this!";
+      System.out.println(s);
+      
+      Thing givenFood = this.getThings().get(0);
+      p.addThing(givenFood);
+      this.getThings().remove(0);
+      
+      s = p.getName() + " received a " + givenFood.getName();
+      s += "! Mmmmm, so tasty!";
+      System.out.println(s);
+      if(verbose){
+        List<Thing> playerInventory = p.getThings();
+        String inventory = p.getName() + "'s inventory: ";
+        for(Thing item : playerInventory){
+          inventory += item.getName() + ", ";
+        }
+        inventory = inventory.trim();
+        if(inventory.charAt(inventory.length()-1) == ','){
+          inventory = inventory.substring(0,inventory.length()-1);
+        }
+        System.err.println(inventory);
+      }
+    } else {
+      
+      if(p instanceof Human){
+        s = this.getName() + " says to " + p.getName() +": ";
+        s += "I hate this company, let me help you out.";
+        System.out.println(s);
+        if(p.getThings().contains(this.getWorld().getGoal())){
+          s = this.getName() + ": Wait, you have the " + this.getWorld().getGoal().getName() +  "! Get to the entrance!\n";
+          System.out.println(s);
+        } else {
+          int[] directions = getDirections();
+          String vertDir = "south";
+          String horzDir = "east";
+          if(directions[0] < 0){
+            horzDir = "west";
+            directions[0] = -directions[0];
+          }
+          if(directions[1] < 0){
+            vertDir = "north";
+            directions[1] = -directions[1];
+          }      
+          s = this.getName() + ": The " + this.getWorld().getGoal().getName() + " you're looking for is " + directions[0] + " rooms " + horzDir;
+          s += " and " + directions[1] + " rooms " + vertDir + ".";
+          System.out.println(s);
+        }
+      } else {
+        System.out.println(this.getName() + ": Sorry, I'm all out of food.");
+      }
+      
+    }    
+    if(!this.hasSpokenTo.contains(p)){
+      this.hasSpokenTo.add(p);
+    }
+  }
+}
